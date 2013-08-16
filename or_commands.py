@@ -1,3 +1,15 @@
+ # Contains all of the methods from the OpenRefactory Protocol.
+ # Each method will get a reply from the jar file and return if valid (if applicable)
+
+ # Copyright (c) 2013 Auburn University and others.
+ # All rights reserved. This program and the accompanying materials
+ # are made available under the terms of the Eclipse Public License v1.0
+ # which accompanies this distribution, and is available at
+ # http://www.eclipse.org/legal/epl-v10.html
+
+ # Contributors:
+ #    Reed Allman (Auburn) - Initial API and implementation
+
 import subprocess
 import json
 import os
@@ -31,8 +43,8 @@ def __set_dir_auto(view):
   # python sucks
   dir = os.path.realpath(os.path.dirname(view.file_name()))
   return __make_command('setdir', { 
-    'directory': dir,
-    'mode': 'local' 
+    'directory' : dir,
+    'mode'      : 'local' 
     })
 
 def __get_text_selection(view):
@@ -40,8 +52,8 @@ def __get_text_selection(view):
   sel = view.sel()[0]
   return { 
     'filename': view.file_name(),
-    'offset':   sel.begin(),
-    'length':   sel.size() }
+    'offset'  :   sel.begin(),
+    'length'  :   sel.size() }
 
 def __make_command(name, params = { }):
   params['command'] = name
@@ -62,22 +74,68 @@ def about():
 def setdir(view):
   dir = os.path.realpath(os.path.dirname(view.file_name()))
   command = __make_command('setdir', { 
-    'directory': dir,
-    'mode': 'local' 
+    'diretory': dir,
+    'mode'    : 'local' 
     })
   return __get_valid_response(command, view)
 
+# returns
+#   reply: "OK",
+#   transformations: [{
+#     shortName, 
+#     name }, ... ]
 def list(view):
   command = __make_command('list', {
-    'quality': "in_testing",
-    'textselection': __get_text_selection(view) 
+    'quality'       : "in_testing",
+    'textselection' : __get_text_selection(view) 
     })
   return __get_valid_response(command, view)
 
+# returns
+#   reply: "OK",
+#   params: [{
+#     label,
+#     prompt,
+#     type,
+#     prompt }, ... ]
 def params(view, transformation):
   command = __make_command('params', {
     'transformation': transformation,
-    'textselection': __get_text_selection(view)
+    'textselection' : __get_text_selection(view)
     })
   return __get_valid_response(command, view)
 
+# returns
+#   reply: "OK",
+#   result: [{
+#     valid,
+#     message }, ... ]   
+def validate(view, transformation, arguments):
+  command = __make_command('validate', {
+    'transformation': transformation,
+    'textselection' : __get_text_selection(view),
+    'arguments'     : arguments
+    })
+  return __get_valid_response(command, view)
+
+#### shee
+# returns
+#   reply: "OK",
+#   transformation: transformation
+#   log: [{
+#     message,
+#     severity, 
+#     context: {
+#       filename,
+#       content,
+#       offset,
+#       length } } ... ]
+#   files: [{
+#     filename,
+#     patchFile }, ... ]
+def xrun(view, transformation, arguments):
+  command = __make_command('xrun', {
+    'transformation': transformation,
+    'textselection' : __get_text_selection(view),
+    'arguments'     : arguments
+    })
