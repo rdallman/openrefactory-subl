@@ -134,8 +134,10 @@ def validate(view, transformation, arguments):
 #     filename,
 #     patchFile }, ... ]
 def xrun(view, transformation, arguments):
+  print(__get_text_selection(view))
   command = __make_command('xrun', {
     'transformation': transformation,
     'textselection' : __get_text_selection(view),
     'arguments'     : arguments
     })
+  return __get_valid_response(command, view)

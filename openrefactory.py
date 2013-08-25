@@ -2,6 +2,8 @@ import sublime_plugin, sublime
 import time
 import sys
 import difflib
+import subprocess
+import os
 from OpenRefactory import or_commands
 
  
@@ -58,30 +60,45 @@ class RefactoryCommand(sublime_plugin.TextCommand):
       patchFile = files['patchFile']
       display_diff(zFile, patchFile)
 
+    def display_diff(zFile, patchFile):
+      self.view.window().run_command('set_layout', {
+        "cols": [0.0, 0.5, 1.0],
+        "rows": [0.0, 1.0],
+        "cells": [[0, 0, 1, 1], [1, 0, 2, 1]] 
+      })
+      with open(zFile, "r") as cfile:
+        from_content = cfile.readlines()
+      with open(patchFile, "r") as pfile:
+        to_content = pfile.readlines()
+      diffs = list(difflib.unified_diff(from_content, to_content))
+      diffs = map(lambda line: (line and line[-1] == "\n") and line or line + "\n", diffs)
+      diffs = ''.join(diffs)
+      scratch = self.view.window().new_file()
+      scratch.set_scratch(True)
+      scratch.set_syntax_file('Packages/Diff/Diff.tmLanguage')
+      scratch.window().run_command('move_to_group', {"group": 1})
+      scratch.run_command('file_diff_dummy1', {'content': diffs})
+
+    def patch_files(f):
+      command = [
+        'patch', 
+        f["filename"],
+        f["patchFile"]
+      ]
+      subprocess.Popen(command, stdout=subprocess.PIPE, stderr=None)
+      #self.view.runCommand('revert')
+      # python sucks
+      #return proc.communicate()[0].strip().decode("utf-8")
+
 
     response = or_commands.xrun(self.view, transformation, params)
     log = response['log']
     files = response['files'][0]
     view_files(files)
+    patch_files(files)
 
-def display_diff(zFile, patchFile):
-  with open(zFile, "r") as cfile:
-    from_content = cfile.readlines()
-  with open(patchFile, "r") as pfile:
-    to_content = pfile.readlines()
-  diffs = list(difflib.unified_diff(from_content, to_content))
-  diffs = map(lambda line: (line and line[-1] == "\n") and line or line + "\n", diffs)
-  diffs = ''.join(diffs)
-  scratch = self.view.window().new_file()
-  scratch.set_scratch(True)
-  scratch.set_syntax_file('Packages/Diff/Diff.tmLanguage')
-  scratch.run_command('file_diff_dummy1', {'content': diffs})
+
 
 class FileDiffDummy1Command(sublime_plugin.TextCommand):
     def run(self, edit, content):
         self.view.insert(edit, 0, content)
-
-
-
-
-
