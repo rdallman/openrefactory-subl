@@ -20,7 +20,6 @@ class RefactoryCommand(sublime_plugin.TextCommand):
 
 
   def input_transformation(self):
-    print("input transformmation")
     transformations = or_commands.list(self.view)['transformations']
     self.view.window().show_quick_panel(
       [[t['shortName'], t['name']] for t in transformations],
@@ -38,7 +37,6 @@ class RefactoryCommand(sublime_plugin.TextCommand):
       self.view.window().show_input_panel(param['label'], str(param['default']), 
         on_input_params, None, None)
 
-    print("input params")
     new_params = []
     params = or_commands.params(self.view, transformation)['params']
     get_new_param(params.pop(0))
@@ -52,20 +50,42 @@ class RefactoryCommand(sublime_plugin.TextCommand):
     self.run_transformation(transformation, params)
 
   def run_transformation(self, transformation, params):
-    def view_log(log):
-      pass
+    # make these view things loop somehow...
+    # FUCK... so if they click into view, bad things happen
+    # FUCK... no while loops...
+    # FUCK YOUR MOTHER SUBLIME TEXT no !done
+    # GOD MIGHT BE REAL timeout
+    def view_log():
+      # change jar 
+        # 1) ['content'] --> patchFile
+        # 2) bz generate diff? discuss... in log, I get a file to diff, files, one to patch
+      # 3) safe to just do it and let them undo?
+      self.view.window().show_quick_panel(
+        [l['context']['filename'] for l in log]+['done'],
+        lambda i: display_diff(log[i], True) if i > -1 and i < len(log) else donelog())
 
-    def view_files(files):
-      zFile = files['filename']
-      patchFile = files['patchFile']
-      display_diff(zFile, patchFile)
+    def donelog():
+      if sublime.ok_cancel_dialog("Would you like to view changes?"):
+        view_files()
 
-    def display_diff(zFile, patchFile):
-      self.view.window().run_command('set_layout', {
-        "cols": [0.0, 0.5, 1.0],
-        "rows": [0.0, 1.0],
-        "cells": [[0, 0, 1, 1], [1, 0, 2, 1]] 
-      })
+    def view_files():
+      if len(files):
+        self.view.window().show_quick_panel(
+          [f['filename'] for f in files]+['done'],
+          lambda i: display_diff(files[i]) if i > -1 and i < len(files) else donefiles())
+
+    def donefiles():
+      patch_files()
+      self.view.window().runCommand('revert')
+
+    def display_diff(f, is_log = False):
+      # Reed, this is ugly
+      # better way to patch?
+      if is_log:
+        sublime.message_dialog(f['message'])
+        f = f['context']
+      zFile = f['filename']
+      patchFile = f['patchFile']
       with open(zFile, "r") as cfile:
         from_content = cfile.readlines()
       with open(patchFile, "r") as pfile:
@@ -76,29 +96,32 @@ class RefactoryCommand(sublime_plugin.TextCommand):
       scratch = self.view.window().new_file()
       scratch.set_scratch(True)
       scratch.set_syntax_file('Packages/Diff/Diff.tmLanguage')
-      scratch.window().run_command('move_to_group', {"group": 1})
-      scratch.run_command('file_diff_dummy1', {'content': diffs})
+      scratch.run_command('file_diff', {'content': diffs})
+      if is_log:
+        sublime.set_timeout(lambda: view_log(), 100)
+      else:
+        sublime.set_timeout(lambda: view_files(), 100)
 
-    def patch_files(f):
-      command = [
-        'patch', 
-        f["filename"],
-        f["patchFile"]
-      ]
-      subprocess.Popen(command, stdout=subprocess.PIPE, stderr=None)
-      #self.view.runCommand('revert')
-      # python sucks
-      #return proc.communicate()[0].strip().decode("utf-8")
-
+    def patch_files():
+      for f in files:
+        command = [
+          'patch', 
+          f["filename"],
+          f["patchFile"]
+        ]
+        subprocess.Popen(command, stdout=subprocess.PIPE, stderr=None)
 
     response = or_commands.xrun(self.view, transformation, params)
     log = response['log']
-    files = response['files'][0]
-    view_files(files)
-    patch_files(files)
+    files = response['files']
+    if len(log):
+      sublime.message_dialog("There were "+str(len(log))+" errors")
+      view_log()
+    else:
+      donelog()
 
 
 
-class FileDiffDummy1Command(sublime_plugin.TextCommand):
+class FileDiffCommand(sublime_plugin.TextCommand):
     def run(self, edit, content):
         self.view.insert(edit, 0, content)
