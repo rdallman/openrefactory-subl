@@ -1,6 +1,6 @@
 [
   { "caption": "OpenRefactory: Refactor", "command": "begin_refactor" },
   { "caption": "OpenRefactory: View Log", "command": "view_log" },
-  { "caption": "OpenRefactory: View Files", "command": "view_files" },
+  { "caption": "OpenRefactory: View Changes", "command": "view_files" },
   { "caption": "OpenRefactory: Execute Transformation", "command": "transform" },
 ]

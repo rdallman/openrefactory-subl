@@ -75,11 +75,17 @@ class BeginRefactorCommand(sublime_plugin.TextCommand):
     log = response['log']
     files = response['files']
     if len(log):
-      sublime.message_dialog("There were "+str(len(log))+" errors")
-      # handle the below for case w/ log
-    elif sublime.ok_cancel_dialog("Would you like to view changes?"):
-      self.view.run_command('view_files')
+      content = "There were "+str(len(log))+" errors\n"
+      content += "Enter 'View Log' into command palette to view\n"
+      content += "Or Enter 'Execute Transformation' to continue"
+      self.view.window().run_command("show_console", {"content": content})
+    else:
+      content = "There were "+str(len(files))+" changed\n"
+      content += "Enter 'View Changes' into command palette to view\n"
+      content += "Or Enter 'Execute Transformation' to continue"
+      self.view.window().run_command("show_console", {"content": content})
 
+# TODO stick the dialog stuff in console w/ instructions --per zack  
 class ViewLogCommand(sublime_plugin.TextCommand):
   def run(self, edit):
     self.view_log()
@@ -155,3 +161,12 @@ class TransformCommand(sublime_plugin.TextCommand):
 class FileDiffCommand(sublime_plugin.TextCommand):
   def run(self, edit, content): 
     self.view.insert(edit, 0, content)
+
+class ShowConsoleCommand(sublime_plugin.WindowCommand):
+  def run(self, content):
+    self.output_view = self.window.get_output_panel("textarea")
+
+    self.output_view.set_read_only(False)
+    self.output_view.run_command('file_diff', {'content': content})
+    self.output_view.set_read_only(True)
+    self.window.run_command("show_panel", {"panel": "output.textarea"})
