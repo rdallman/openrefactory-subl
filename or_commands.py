@@ -13,6 +13,7 @@
 import subprocess
 import json
 import os
+import sublime
 
 # multiple selections
 # think about view
@@ -23,7 +24,7 @@ def __send_command(command, view = None):
   jar_command = [
     'java', 
     '-cp',
-    '/Users/reed/Dev/OpenRefactory/org.openrefactory.demo.ui/ordemo.jar',
+    sublime.packages_path()+"/OpenRefactory/ordemo.jar",
     'org.openrefactory.internal.daemon.ORProxy',
     command ]
   print(jar_command)
