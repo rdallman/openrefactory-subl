@@ -13,6 +13,12 @@ programmer, all within the confines of terminal vim or gVim.
 TODO support package manager
 
 ## Quick Start
+for the below, open your command palette (command+shift+p) and type this in (kind of in order...) to complete a transformation 
+
+* OpenRefactory: Refactor -> type desired xform
+* OpenRefactory: View Log (if it exists...)
+* OpenRefactory: View Files (if you want...)
+* OpenRefactory: Execute Transformation
 
 ### List of All Transformations
 
