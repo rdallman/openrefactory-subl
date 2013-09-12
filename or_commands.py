@@ -23,12 +23,15 @@ def __send_command(command, view = None):
   jar_command = [
     'java', 
     '-cp',
-    '/Users/reed/Dev/openrefactory-vim/jar/ordemo.jar',
+    '/Users/reed/Dev/OpenRefactory/org.openrefactory.demo.ui/ordemo.jar',
     'org.openrefactory.internal.daemon.ORProxy',
     command ]
+  print(jar_command)
   proc = subprocess.Popen(jar_command, stdout=subprocess.PIPE, stderr=None)
   # python sucks
-  return proc.communicate()[0].strip().decode("utf-8")
+  response = proc.communicate()[0].strip().decode("utf-8")
+  print(response)
+  return response
 
 def __get_valid_response(command, view = None):
   output = __send_command(command, view)
@@ -121,20 +124,19 @@ def validate(view, transformation, arguments):
 #### shee
 # returns
 #   reply: "OK",
-#   transformation: transformation
+#   transformation,
 #   log: [{
 #     message,
 #     severity, 
 #     context: {
 #       filename,
-#       content,
+#       patchFile,
 #       offset,
 #       length } } ... ]
 #   files: [{
 #     filename,
 #     patchFile }, ... ]
 def xrun(view, transformation, arguments):
-  print(__get_text_selection(view))
   command = __make_command('xrun', {
     'transformation': transformation,
     'textselection' : __get_text_selection(view),
